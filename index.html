@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Old School RuneScape: Conjunction Quest</title>
+
+  <style>
+    @font-face {
+      font-family: 'RuneScape-Plain-12';
+      src: url('RuneScape-Plain-12.ttf') format('truetype'),
+           url('https://fonts.cdnfonts.com/s/14878/RuneScape-Plain-12.woff') format('woff'),
+           local('RuneScape-Plain-12');
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      image-rendering: pixelated;
+    }
+
+    body {
+      font-family: 'RuneScape-Plain-12', monospace, sans-serif;
+      background-color: #0b0907;
+      background-image: 
+        radial-gradient(#261d15 15%, transparent 16%), 
+        radial-gradient(#17120c 15%, transparent 16%);
+      background-size: 20px 20px;
+      background-position: 0 0, 10px 10px;
+      margin: 0;
+      padding: 16px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #ffff00;
+      text-shadow: 2px 2px 0px #000000;
+    }
+
+    /* OSRS Wide-Screen Stone Frame */
+    .rs-frame {
+      background: #493f35;
+      width: 100%;
+      max-width: 920px;
+      border: 5px solid #2b2219;
+      box-shadow: 
+        inset 3px 3px 0px #6d5e4f,
+        inset -3px -3px 0px #221a13,
+        0 0 0 4px #534537,
+        0 16px 36px rgba(0, 0, 0, 0.9);
+      border-radius: 6px;
+      padding: 20px;
+      position: relative;
+    }
+
+    /* OSRS HUD Status Bar */
+    .status-hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+      background: #2e261f;
+      padding: 10px 16px;
+      border: 2px solid #1a1511;
+      border-right-color: #534537;
+      border-bottom-color: #534537;
+    }
+
+    .player-tag {
+      color: #00ff00;
+      font-size: 1.25rem;
+    }
+
+    .quest-tag {
+      color: #ff981f;
+      font-size: 1.15rem;
+    }
+
+    .xp-tag {
+      color: #00ffff;
+      font-size: 1.25rem;
+    }
+
+    /* Pixelated Visual Viewport */
+    .pixel-viewport {
+      width: 100%;
+      height: 190px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      border: 3px solid #231b14;
+      box-shadow: inset 0 0 14px #000000;
+      background: #14100b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pixel-viewport svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* OSRS Chatbox Prompt */
+    .dialogue-box {
+      background: #382e24;
+      border: 2px solid #231b14;
+      border-right-color: #554434;
+      border-bottom-color: #554434;
+      padding: 16px 14px;
+      margin-bottom: 14px;
+      font-size: 1.35rem;
+      color: #ffffff;
+      line-height: 1.45;
+      text-align: center;
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-shadow: 2px 2px 0px #000000;
+    }
+
+    /* Quest 1 Option Grid */
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .rs-option-btn {
+      font-family: inherit;
+      background: #504437;
+      border: 3px solid #73614e;
+      border-right-color: #231a12;
+      border-bottom-color: #231a12;
+      border-radius: 4px;
+      padding: 16px 12px;
+      font-size: 1.35rem;
+      color: #fffe9e;
+      cursor: pointer;
+      text-align: center;
+      text-shadow: 2px 2px 0px #000000;
+      transition: background-color 0.1s ease;
+    }
+
+    .rs-option-btn:hover:not([disabled]) {
+      background: #5c4f40;
+      color: #ffffff;
+    }
+
+    .rs-option-btn:active:not([disabled]) {
+      border-top-color: #231a12;
+      border-left-color: #231a12;
+      border-right-color: #73614e;
+      border-bottom-color: #73614e;
+      transform: translateY(1px);
+    }
+
+    .rs-option-btn.correct {
+      background-color: #15803d !important;
+      border-color: #22c55e #14532d #14532d #22c55e !important;
+      color: #ffffff !important;
+    }
+
+    .rs-option-btn.wrong {
+      background-color: #b91c1c !important;
+      border-color: #ef4444 #7f1d1d #7f1d1d #ef4444 !important;
+      color: #ffffff !important;
+    }
+
+    .rs-option-btn.reveal {
+      border: 2px dashed #22c55e !important;
+      background-color: #2a3c2a !important;
+      color: #86efac !important;
+    }
+
+    /* Quest 2 Fill-in-the-Blank */
+    .blank-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .blank-input {
+      font-family: inherit;
+      background: #2e261f;
+      border: 3px solid #1a1511;
+      border-right-color: #534537;
+      border-bottom-color: #534537;
+      color: #ffff00;
+      padding: 14px 20px;
+      font-size: 1.4rem;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      outline: none;
+      text-shadow: 2px 2px 0px #000;
+      border-radius: 4px;
+    }
+
+    /* Level-Up Fanfare Banner */
+    .level-up-banner {
+      display: none;
+      background: #2b2219;
+      border: 3px double #facc15;
+      padding: 12px;
+      margin-top: 14px;
+      text-align: center;
+      animation: pulseBanner 1s infinite alternate;
+    }
+
+    @keyframes pulseBanner {
+      from { box-shadow: 0 0 6px #ca8a04; }
+      to { box-shadow: 0 0 16px #fde047; }
+    }
+
+    .level-up-title {
+      font-size: 1.3rem;
+      color: #ff0000;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .level-up-msg {
+      font-size: 1.3rem;
+      background: #fed7aa;
+      color: #451a03;
+      padding: 4px 12px;
+      border-radius: 2px;
+      display: inline-block;
+      text-shadow: none;
+      font-weight: bold;
+    }
+
+    .action-btn {
+      font-family: inherit;
+      margin-top: 16px;
+      width: 100%;
+      padding: 16px;
+      font-size: 1.35rem;
+      color: #ffffff;
+      background: #8b2500;
+      border: 3px solid #b23a0d;
+      border-top-color: #b23a0d;
+      border-left-color: #b23a0d;
+      border-right-color: #4a1200;
+      border-bottom-color: #4a1200;
+      border-radius: 4px;
+      cursor: pointer;
+      text-shadow: 2px 2px 0px #000;
+    }
+
+    .action-btn:active {
+      border-top-color: #4a1200;
+      border-left-color: #4a1200;
+      border-right-color: #b23a0d;
+      border-bottom-color: #b23a0d;
+    }
+
+    .screen-panel {
+      display: none;
+    }
+
+    .screen-panel.active {
+      display: block;
+    }
+
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    @media (max-width: 640px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+      .pixel-viewport {
+        height: 160px;
+      }
+      .dialogue-box {
+        font-size: 1.15rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Audio Elements -->
+  <audio id="audio-adventure" loop preload="auto">
+    <source src="adventure.mid" type="audio/midi">
+  </audio>
+  <audio id="audio-questcomplete" preload="auto">
+    <source src="runescape-questcomplete.mid" type="audio/midi">
+  </audio>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="rs-frame">
+
+    <!-- SCREEN 1: LOGIN / NAME PROMPT -->
+    <div id="start-panel" class="screen-panel active" style="text-align: center; padding: 25px 12px;">
+      <div style="font-size: 2.4rem; color: #ffff00; margin-bottom: 8px;">⚔️ THE TRIAL OF CONJUNCTIONS ⚔️</div>
+      <p style="color: #ff981f; font-size: 1.35rem; margin-bottom: 12px;">Welcome to Old School RuneScape.</p>
+      <p style="color: #ffffff; font-size: 1.25rem;">Enter your English name to begin your journey:</p>
+      
+      <input type="text" id="player-input" class="blank-input" style="max-width: 360px; margin: 18px 0 24px 0;" placeholder="Type your name..." maxlength="18" />
+      <br />
+      <button class="action-btn" style="max-width: 380px;" onclick="startGame()">Begin Quest ➜</button>
+    </div>
+
+    <!-- SCREEN 2: GAMEPLAY (QUEST 1 & QUEST 2) -->
+    <div id="gameplay-panel" class="screen-panel">
+      <div class="status-hud">
+        <span class="player-tag" id="hud-player-name">Player: Adventurer</span>
+        <span class="quest-tag" id="hud-quest-title">Quest 1: Choose Option (1/5)</span>
+        <span class="xp-tag" id="hud-xp-score">XP: 0 / 1000</span>
+      </div>
+
+      <div class="pixel-viewport" id="viewport-graphic"></div>
+
+      <div class="dialogue-box" id="quest-prompt">Loading quest...</div>
+
+      <!-- Quest 1 (Multiple Choice) -->
+      <div class="options-grid" id="mc-container"></div>
+
+      <!-- Quest 2 (Fill in the blanks) -->
+      <div class="blank-wrap" id="blank-container" style="display: none;">
+        <span style="color: #ff981f; font-size: 1.15rem;">[ Use: 'and' | 'or' | 'but' ]</span>
+        <input type="text" id="blank-field" class="blank-input" placeholder="Type your answer..." autocomplete="off" autocorrect="off" autocapitalize="off" />
+        <button class="action-btn" style="max-width: 340px; padding: 13px;" onclick="submitBlank()">Submit Answer ↵</button>
+      </div>
+
+      <!-- Fanfare Notification -->
+      <div class="level-up-banner" id="level-up-box">
+        <div class="level-up-title">★ LEVEL UP! ★</div>
+        <div class="level-up-msg">Congratulations! You have levelled up!</div>
+      </div>
+
+      <button class="action-btn" id="continue-btn" style="display: none;" onclick="nextStep()">Click here to continue ➜</button>
+    </div>
+
+    <!-- SCREEN 3: RESULTS SCREEN -->
+    <div id="result-panel" class="screen-panel" style="text-align: center; padding: 30px 14px;">
+      <div style="font-size: 3rem; margin-bottom: 8px;">🏆 QUEST COMPLETE! 🏆</div>
+      <p style="color: #ff981f; font-size: 1.4rem;" id="hero-congrats"></p>
+      <div style="font-size: 2.6rem; color: #ffff00; margin: 20px 0;" id="final-xp-slot">0 / 1000 XP</div>
+      <p id="final-evaluation" style="font-size: 1.35rem; color: #00ffff; margin-bottom: 24px;"></p>
+      <button class="action-btn" style="max-width: 380px;" onclick="resetQuest()">Play Again 🔄</button>
+    </div>
+
+  </div>
+
+  <script>
+    let hero = "Adventurer";
+    let stepIndex = 0;
+    let earnedXP = 0;
+    const XP_INCREMENT = 100;
+
+    const bgmAdventure = document.getElementById("audio-adventure");
+    const sfxQuestComplete = document.getElementById("audio-questcomplete");
+
+    bgmAdventure.volume = 0.5;
+    sfxQuestComplete.volume = 0.6;
+
+    const questData = [
+      // --- QUEST 1: MULTIPLE CHOICE ---
+      {
+        questName: "Quest 1: Choose the best answer (1/5)",
+        type: "mc",
+        prompt: "Kiki likes to eat apples ______ oranges for breakfast.",
+        options: ["and", "or", "but"],
+        correctIndex: 0,
+        svg: `<svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="180" fill="#14100b"/>
+          <rect y="130" width="400" height="50" fill="#2d2218"/>
+          <rect x="40" y="115" width="320" height="35" fill="#543822" stroke="#1f140c" stroke-width="4"/>
+          <rect x="70" y="150" width="24" height="30" fill="#3c2616"/>
+          <rect x="306" y="150" width="24" height="30" fill="#3c2616"/>
+          <rect x="120" y="66" width="36" height="36" fill="#b91c1c" stroke="#000" stroke-width="3"/>
+          <rect x="124" y="60" width="8" height="6" fill="#15803d"/>
+          <rect x="136" y="54" width="4" height="12" fill="#78350f"/>
+          <text x="138" y="110" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#ffff00" text-anchor="middle">APPLE</text>
+          <rect x="194" y="72" width="12" height="32" fill="#facc15" stroke="#000" stroke-width="2"/>
+          <rect x="184" y="82" width="32" height="12" fill="#facc15" stroke="#000" stroke-width="2"/>
+          <rect x="244" y="66" width="36" height="36" fill="#ea580c" stroke="#000" stroke-width="3"/>
+          <rect x="260" y="58" width="6" height="8" fill="#15803d"/>
+          <text x="262" y="110" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#ffff00" text-anchor="middle">ORANGE</text>
+        </svg>`
+      },
+      {
+        questName: "Quest 1: Choose the best answer (2/5)",
+        type: "mc",
+        prompt: "Anna is small, ______ she can run very fast.",
+        options: ["and", "or", "but"],
+        correctIndex: 2,
+        svg: `<svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="180" fill="#14100b"/>
+          <rect y="130" width="400" height="50" fill="#3b332b"/>
+          <line x1="0" y1="130" x2="400" y2="130" stroke="#1d1712" stroke-width="4"/>
+          <rect x="50" y="90" width="70" height="6" fill="#facc15" opacity="0.8"/>
+          <rect x="90" y="105" width="60" height="6" fill="#facc15" opacity="0.8"/>
+          <rect x="220" y="44" width="24" height="24" fill="#fed7aa" stroke="#000" stroke-width="3"/>
+          <rect x="216" y="68" width="32" height="34" fill="#15803d" stroke="#000" stroke-width="3"/>
+          <rect x="210" y="102" width="14" height="28" fill="#78350f" stroke="#000" stroke-width="3"/>
+          <rect x="234" y="96" width="14" height="28" fill="#78350f" stroke="#000" stroke-width="3"/>
+          <rect x="300" y="50" width="36" height="36" fill="#1f1812" stroke="#facc15" stroke-width="3"/>
+          <polygon points="310,76 326,62 320,62 326,54 314,64 320,64" fill="#ffff00"/>
+          <text x="232" y="32" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#00ffff" text-anchor="middle">ANNA (FAST)</text>
+        </svg>`
+      },
+      {
+        questName: "Quest 1: Choose the best answer (3/5)",
+        type: "mc",
+        prompt: "Mira doesn't want to drink milk ______ apple juice.",
+        options: ["and", "or", "but"],
+        correctIndex: 1,
+        svg: `<svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="180" fill="#14100b"/>
+          <rect y="130" width="400" height="50" fill="#2d2218"/>
+          <polygon points="100,60 140,60 134,116 106,116" fill="#94a3b8" stroke="#000" stroke-width="3"/>
+          <ellipse cx="120" cy="62" rx="18" ry="6" fill="#ffffff"/>
+          <line x1="90" y1="52" x2="150" y2="124" stroke="#dc2626" stroke-width="6"/>
+          <text x="120" y="145" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#ffffff" text-anchor="middle">MILK</text>
+          <text x="200" y="96" font-family="'RuneScape-Plain-12', monospace" font-size="24" fill="#facc15" text-anchor="middle">OR</text>
+          <rect x="260" y="68" width="36" height="48" rx="6" fill="#f59e0b" stroke="#000" stroke-width="3"/>
+          <rect x="272" y="56" width="12" height="12" fill="#d97706" stroke="#000" stroke-width="2"/>
+          <line x1="248" y1="52" x2="308" y2="124" stroke="#dc2626" stroke-width="6"/>
+          <text x="278" y="145" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#f59e0b" text-anchor="middle">JUICE</text>
+        </svg>`
+      },
+      {
+        questName: "Quest 1: Choose the best answer (4/5)",
+        type: "mc",
+        prompt: "Justin wants to go to the playground, ______ it is raining heavily.",
+        options: ["and", "or", "but"],
+        correctIndex: 2,
+        svg: `<svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="180" fill="#0d1117"/>
+          <rect x="60" y="24" width="120" height="34" fill="#334155" stroke="#000" stroke-width="3"/>
+          <rect x="190" y="18" width="150" height="40" fill="#1e293b" stroke="#000" stroke-width="3"/>
+          <line x1="90" y1="70" x2="70" y2="110" stroke="#38bdf8" stroke-width="4" stroke-linecap="square"/>
+          <line x1="140" y1="80" x2="120" y2="120" stroke="#38bdf8" stroke-width="4" stroke-linecap="square"/>
+          <line x1="210" y1="70" x2="190" y2="110" stroke="#38bdf8" stroke-width="4" stroke-linecap="square"/>
+          <line x1="270" y1="80" x2="250" y2="120" stroke="#38bdf8" stroke-width="4" stroke-linecap="square"/>
+          <line x1="320" y1="70" x2="300" y2="110" stroke="#38bdf8" stroke-width="4" stroke-linecap="square"/>
+          <rect y="136" width="400" height="44" fill="#2d3748"/>
+          <text x="200" y="160" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#7dd3fc" text-anchor="middle">LUMBRIDGE RAINSTORM</text>
+        </svg>`
+      },
+      {
+        questName: "Quest 1: Choose the best answer (5/5)",
+        type: "mc",
+        prompt: "The little puppy is cute ______ very friendly.",
+        options: ["and", "or", "but"],
+        correctIndex: 0,
+        svg: `<svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="180" fill="#14100b"/>
+          <rect y="130" width="400" height="50" fill="#3b332b"/>
+          <rect x="160" y="70" width="60" height="40" fill="#b45309" stroke="#000" stroke-width="3"/>
+          <rect x="210" y="52" width="28" height="28" fill="#b45309" stroke="#000" stroke-width="3"/>
+          <rect x="230" y="60" width="12" height="12" fill="#78350f"/>
+          <rect x="218" y="58" width="4" height="6" fill="#000"/>
+          <rect x="164" y="110" width="10" height="22" fill="#78350f" stroke="#000" stroke-width="2"/>
+          <rect x="202" y="110" width="10" height="22" fill="#78350f" stroke="#000" stroke-width="2"/>
+          <rect x="146" y="62" width="16" height="10" fill="#b45309" stroke="#000" stroke-width="2"/>
+          <text x="130" y="56" font-family="'RuneScape-Plain-12', monospace" font-size="26" fill="#ef4444">♥</text>
+          <text x="256" y="50" font-family="'RuneScape-Plain-12', monospace" font-size="26" fill="#ef4444">♥</text>
+          <text x="200" y="156" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#fde68a" text-anchor="middle">FRIENDLY STRAY DOG</text>
+        </svg>`
+      },
+
+      // --- QUEST 2: FILL IN THE BLANKS ---
+      {
+        questName: "Quest 2: Fill in the blank (1/5)",
+        type: "blank",
+        prompt: "Yuki washes her face ______ brush her teeth every day.",
+        expected: "and",
+        svg: `<svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="180" fill="#14100b"/>
+          <rect y="130" width="400" height="50" fill="#2d2218"/>
+          <rect x="100" y="70" width="50" height="46" fill="#0284c7" stroke="#000" stroke-width="3"/>
+          <ellipse cx="125" cy="70" rx="25" ry="8" fill="#38bdf8"/>
+          <text x="125" y="145" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#38bdf8" text-anchor="middle">WASH</text>
+          <rect x="194" y="76" width="12" height="30" fill="#ffff00"/>
+          <rect x="185" y="85" width="30" height="12" fill="#ffff00"/>
+          <rect x="240" y="84" width="70" height="12" fill="#16a34a" stroke="#000" stroke-width="2"/>
+          <rect x="294" y="72" width="16" height="12" fill="#ffffff" stroke="#000" stroke-width="2"/>
+          <text x="275" y="145" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#4ade80" text-anchor="middle">BRUSH</text>
+        </svg>`
+      },
+      {
+        questName: "Quest 2: Fill in the blank (2/5)",
+        type: "blank",
+        prompt: "Yoyo can play the piano, ______ she cannot ride a bicycle.",
+        expected: "but",
+        svg: `<svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="180" fill="#14100b"/>
+          <rect y="130" width="400" height="50" fill="#2d2218"/>
+          <rect x="80" y="58" width="90" height="60" fill="#ffffff" stroke="#000" stroke-width="3"/>
+          <rect x="96" y="58" width="12" height="34" fill="#000000"/>
+          <rect x="120" y="58" width="12" height="34" fill="#000000"/>
+          <rect x="144" y="58" width="12" height="34" fill="#000000"/>
+          <text x="125" y="145" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#22c55e" text-anchor="middle">PIANO: YES</text>
+          <circle cx="260" cy="94" r="20" fill="none" stroke="#60a5fa" stroke-width="4"/>
+          <circle cx="316" cy="94" r="20" fill="none" stroke="#60a5fa" stroke-width="4"/>
+          <line x1="260" y1="94" x2="288" y2="70" stroke="#60a5fa" stroke-width="4"/>
+          <line x1="316" y1="94" x2="288" y2="70" stroke="#60a5fa" stroke-width="4"/>
+          <line x1="244" y1="62" x2="332" y2="126" stroke="#dc2626" stroke-width="6"/>
+          <text x="288" y="145" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#ef4444" text-anchor="middle">BIKE: NO</text>
+        </svg>`
+      },
+      {
+        questName: "Quest 2: Fill in the blank (3/5)",
+        type: "blank",
+        prompt: "Lucas doesn't play computer games ______ sing songs before bed.",
+        expected: "or",
+        svg: `<svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="180" fill="#14100b"/>
+          <rect y="130" width="400" height="50" fill="#2d2218"/>
+          <rect x="80" y="56" width="80" height="56" fill="#1e293b" stroke="#000" stroke-width="3"/>
+          <line x1="72" y1="48" x2="168" y2="120" stroke="#dc2626" stroke-width="6"/>
+          <text x="120" y="145" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#cbd5e1" text-anchor="middle">NO GAMES</text>
+          <text x="200" y="96" font-family="'RuneScape-Plain-12', monospace" font-size="24" fill="#facc15" text-anchor="middle">OR</text>
+          <text x="280" y="105" font-family="'RuneScape-Plain-12', monospace" font-size="48" fill="#a855f7" text-anchor="middle">♫</text>
+          <line x1="250" y1="54" x2="310" y2="120" stroke="#dc2626" stroke-width="6"/>
+          <text x="280" y="145" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#cbd5e1" text-anchor="middle">NO SONGS</text>
+        </svg>`
+      },
+      {
+        questName: "Quest 2: Fill in the blank (4/5)",
+        type: "blank",
+        prompt: "Jessica wants to read a storybook ______ she doesn't want to read Peppa Pig.",
+        expected: "but",
+        svg: `<svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="180" fill="#14100b"/>
+          <rect y="130" width="400" height="50" fill="#2d2218"/>
+          <rect x="90" y="50" width="70" height="65" fill="#1d4ed8" stroke="#000" stroke-width="3"/>
+          <line x1="104" y1="68" x2="146" y2="68" stroke="#ffffff" stroke-width="3"/>
+          <line x1="104" y1="82" x2="146" y2="82" stroke="#ffffff" stroke-width="3"/>
+          <text x="125" y="145" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#60a5fa" text-anchor="middle">STORYBOOK</text>
+          <circle cx="280" cy="80" r="26" fill="#f472b6" stroke="#000" stroke-width="3"/>
+          <ellipse cx="304" cy="78" rx="10" ry="7" fill="#f472b6" stroke="#000" stroke-width="2"/>
+          <line x1="244" y1="46" x2="316" y2="120" stroke="#dc2626" stroke-width="6"/>
+          <text x="280" y="145" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#ef4444" text-anchor="middle">NO PEPPA</text>
+        </svg>`
+      },
+      {
+        questName: "Quest 2: Fill in the blank (5/5)",
+        type: "blank",
+        prompt: "Stella doesn't run ______ hit the others in the classroom.",
+        expected: "or",
+        svg: `<svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="180" fill="#14100b"/>
+          <rect x="80" y="26" width="240" height="116" fill="#2b2219" stroke="#78350f" stroke-width="4"/>
+          <rect x="90" y="36" width="220" height="96" fill="#382e24"/>
+          <text x="200" y="62" font-family="'RuneScape-Plain-12', monospace" font-size="14" fill="#facc15" text-anchor="middle">CLASS RULES</text>
+          <text x="200" y="90" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#ffffff" text-anchor="middle">1. DO NOT RUN</text>
+          <text x="200" y="115" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#ffffff" text-anchor="middle">2. DO NOT HIT</text>
+        </svg>`
+      }
+    ];
+
+    function startGame() {
+      const nameVal = document.getElementById("player-input").value.trim();
+      hero = nameVal !== "" ? nameVal : "Adventurer";
+
+      document.getElementById("hud-player-name").textContent = `Player: ${hero}`;
+      switchScreen("gameplay-panel");
+      
+      bgmAdventure.currentTime = 0;
+      bgmAdventure.play().catch(() => {});
+
+      renderStage();
+    }
+
+    document.getElementById("player-input").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") startGame();
+    });
+
+    function switchScreen(id) {
+      document.querySelectorAll(".screen-panel").forEach(p => p.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
+
+    function renderStage() {
+      const stage = questData[stepIndex];
+
+      document.getElementById("hud-quest-title").textContent = stage.questName;
+      document.getElementById("hud-xp-score").textContent = `XP: ${earnedXP} / 1000`;
+      document.getElementById("viewport-graphic").innerHTML = stage.svg;
+      document.getElementById("quest-prompt").textContent = stage.prompt;
+      document.getElementById("level-up-box").style.display = "none";
+      document.getElementById("continue-btn").style.display = "none";
+
+      const mcBox = document.getElementById("mc-container");
+      const blankBox = document.getElementById("blank-container");
+      const inputEl = document.getElementById("blank-field");
+
+      if (stage.type === "mc") {
+        mcBox.style.display = "grid";
+        blankBox.style.display = "none";
+        mcBox.innerHTML = "";
+
+        const prefixes = ["A. ", "B. ", "C. "];
+        stage.options.forEach((opt, idx) => {
+          const btn = document.createElement("button");
+          btn.className = "rs-option-btn";
+          btn.textContent = `${prefixes[idx]}${opt}`;
+          btn.onclick = () => selectMCOption(idx);
+          mcBox.appendChild(btn);
+        });
+      } else {
+        mcBox.style.display = "none";
+        blankBox.style.display = "flex";
+        inputEl.value = "";
+        inputEl.disabled = false;
+        inputEl.style.borderColor = "#1a1511";
+        inputEl.style.color = "#ffff00";
+        inputEl.focus();
+      }
+    }
+
+    function selectMCOption(chosenIndex) {
+      const stage = questData[stepIndex];
+      const buttons = document.querySelectorAll(".rs-option-btn");
+      buttons.forEach(b => b.disabled = true);
+
+      if (chosenIndex === stage.correctIndex) {
+        buttons[chosenIndex].classList.add("correct");
+        handleSuccess();
+      } else {
+        buttons[chosenIndex].classList.add("wrong");
+        buttons[stage.correctIndex].classList.add("reveal");
+      }
+
+      document.getElementById("continue-btn").style.display = "block";
+    }
+
+    function submitBlank() {
+      const stage = questData[stepIndex];
+      const inputEl = document.getElementById("blank-field");
+      const answer = inputEl.value.trim().toLowerCase();
+
+      if (!answer) return;
+
+      inputEl.disabled = true;
+
+      if (answer === stage.expected.toLowerCase()) {
+        inputEl.style.borderColor = "#22c55e";
+        inputEl.style.color = "#22c55e";
+        handleSuccess();
+      } else {
+        inputEl.style.borderColor = "#ef4444";
+        inputEl.style.color = "#ef4444";
+      }
+
+      document.getElementById("continue-btn").style.display = "block";
+    }
+
+    document.getElementById("blank-field").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") submitBlank();
+    });
+
+    function handleSuccess() {
+      earnedXP += XP_INCREMENT;
+      document.getElementById("hud-xp-score").textContent = `XP: ${earnedXP} / 1000`;
+      document.getElementById("level-up-box").style.display = "block";
+      fireConfetti();
+    }
+
+    function nextStep() {
+      stepIndex++;
+      if (stepIndex < questData.length) {
+        renderStage();
+      } else {
+        completeQuest();
+      }
+    }
+
+    function completeQuest() {
+      bgmAdventure.pause();
+      bgmAdventure.currentTime = 0;
+
+      sfxQuestComplete.currentTime = 0;
+      sfxQuestComplete.play().catch(() => {});
+
+      switchScreen("result-panel");
+      document.getElementById("hero-congrats").textContent = `Congratulations, Hero ${hero}!`;
+      document.getElementById("final-xp-slot").textContent = `${earnedXP} / 1000 XP`;
+
+      const evalEl = document.getElementById("final-evaluation");
+      if (earnedXP === 1000) {
+        evalEl.textContent = "🏆 Legendary Victory! You have conquered the Conjunctions trial with 100% mastery!";
+        fireConfetti();
+      } else if (earnedXP >= 700) {
+        evalEl.textContent = "⚔️ Well fought! You have levelled up and earned your conjunction medal!";
+      } else {
+        evalEl.textContent = "🛡️ No worries! Practise more and try again!";
+      }
+    }
+
+    function resetQuest() {
+      stepIndex = 0;
+      earnedXP = 0;
+      document.getElementById("player-input").value = "";
+      sfxQuestComplete.pause();
+      sfxQuestComplete.currentTime = 0;
+      switchScreen("start-panel");
+    }
+
+    /* Confetti Particle Engine */
+    const canvas = document.getElementById("confetti-canvas");
+    const ctx = canvas.getContext("2d");
+    let confettiList = [];
+    let animationId = null;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    function fireConfetti() {
+      confettiList = [];
+      const shades = ["#ffff00", "#ff981f", "#00ffff", "#22c55e", "#ef4444", "#ffffff"];
+      for (let i = 0; i < 90; i++) {
+        confettiList.push({
+          x: canvas.width / 2,
+          y: canvas.height / 2,
+          w: Math.random() * 8 + 5,
+          h: Math.random() * 8 + 5,
+          color: shades[Math.floor(Math.random() * shades.length)],
+          vx: (Math.random() - 0.5) * 16,
+          vy: (Math.random() - 0.7) * 16,
+          rotation: Math.random() * 360,
+          rotSpeed: (Math.random() - 0.5) * 12,
+          alpha: 1
+        });
+      }
+      if (!animationId) animateParticles();
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let alive = 0;
+
+      confettiList.forEach(c => {
+        c.x += c.vx;
+        c.y += c.vy;
+        c.vy += 0.35;
+        c.rotation += c.rotSpeed;
+        c.alpha -= 0.012;
+
+        if (c.alpha > 0) {
+          alive++;
+          ctx.save();
+          ctx.translate(c.x, c.y);
+          ctx.rotate((c.rotation * Math.PI) / 180);
+          ctx.globalAlpha = c.alpha;
+          ctx.fillStyle = c.color;
+          ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+          ctx.restore();
+        }
+      });
+
+      if (alive > 0) {
+        animationId = requestAnimationFrame(animateParticles);
+      } else {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+  </script>
+</body>
+</html>
