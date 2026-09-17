@@ -40,7 +40,6 @@
       text-shadow: 2px 2px 0px #000000;
     }
 
-    /* OSRS Wide-Screen Stone Frame */
     .rs-frame {
       background: #493f35;
       width: 100%;
@@ -56,7 +55,6 @@
       position: relative;
     }
 
-    /* OSRS HUD Status Bar */
     .status-hud {
       display: flex;
       justify-content: space-between;
@@ -71,22 +69,10 @@
       border-bottom-color: #534537;
     }
 
-    .player-tag {
-      color: #00ff00;
-      font-size: 1.25rem;
-    }
+    .player-tag { color: #00ff00; font-size: 1.25rem; }
+    .quest-tag { color: #ff981f; font-size: 1.15rem; }
+    .xp-tag { color: #00ffff; font-size: 1.25rem; }
 
-    .quest-tag {
-      color: #ff981f;
-      font-size: 1.15rem;
-    }
-
-    .xp-tag {
-      color: #00ffff;
-      font-size: 1.25rem;
-    }
-
-    /* Pixelated Visual Viewport */
     .pixel-viewport {
       width: 100%;
       height: 190px;
@@ -107,7 +93,6 @@
       display: block;
     }
 
-    /* OSRS Chatbox Prompt */
     .dialogue-box {
       background: #382e24;
       border: 2px solid #231b14;
@@ -126,7 +111,6 @@
       text-shadow: 2px 2px 0px #000000;
     }
 
-    /* Quest 1 Option Grid */
     .options-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -180,7 +164,6 @@
       color: #86efac !important;
     }
 
-    /* Quest 2 Fill-in-the-Blank */
     .blank-wrap {
       display: flex;
       flex-direction: column;
@@ -205,7 +188,6 @@
       border-radius: 4px;
     }
 
-    /* Level-Up Fanfare Banner */
     .level-up-banner {
       display: none;
       background: #2b2219;
@@ -283,35 +265,27 @@
     }
 
     @media (max-width: 640px) {
-      .options-grid {
-        grid-template-columns: 1fr;
-      }
-      .pixel-viewport {
-        height: 160px;
-      }
-      .dialogue-box {
-        font-size: 1.15rem;
-      }
+      .options-grid { grid-template-columns: 1fr; }
+      .pixel-viewport { height: 160px; }
+      .dialogue-box { font-size: 1.15rem; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Audio Elements: Supports both converted MP3 and original MIDI fallback -->
+  <!-- Audio Elements -->
   <audio id="audio-adventure" loop preload="auto">
     <source src="adventure.mp3" type="audio/mpeg">
-    <source src="adventure.mid" type="audio/midi">
   </audio>
   <audio id="audio-questcomplete" preload="auto">
     <source src="runescape-questcomplete.mp3" type="audio/mpeg">
-    <source src="runescape-questcomplete.mid" type="audio/midi">
   </audio>
 
   <canvas id="confetti-canvas"></canvas>
 
   <div class="rs-frame">
 
-    <!-- SCREEN 1: LOGIN / NAME PROMPT -->
+    <!-- SCREEN 1: LOGIN -->
     <div id="start-panel" class="screen-panel active" style="text-align: center; padding: 25px 12px;">
       <div style="font-size: 2.4rem; color: #ffff00; margin-bottom: 8px;">⚔️ THE TRIAL OF CONJUNCTIONS ⚔️</div>
       <p style="color: #ff981f; font-size: 1.35rem; margin-bottom: 12px;">Welcome to Old School RuneScape.</p>
@@ -322,7 +296,7 @@
       <button class="action-btn" style="max-width: 380px;" onclick="startGame()">Begin Quest ➜</button>
     </div>
 
-    <!-- SCREEN 2: GAMEPLAY (QUEST 1 & QUEST 2) -->
+    <!-- SCREEN 2: GAMEPLAY -->
     <div id="gameplay-panel" class="screen-panel">
       <div class="status-hud">
         <span class="player-tag" id="hud-player-name">Player: Adventurer</span>
@@ -334,17 +308,14 @@
 
       <div class="dialogue-box" id="quest-prompt">Loading quest...</div>
 
-      <!-- Quest 1 (Multiple Choice) -->
       <div class="options-grid" id="mc-container"></div>
 
-      <!-- Quest 2 (Fill in the blanks) -->
       <div class="blank-wrap" id="blank-container" style="display: none;">
         <span style="color: #ff981f; font-size: 1.15rem;">[ Use: 'and' | 'or' | 'but' ]</span>
         <input type="text" id="blank-field" class="blank-input" placeholder="Type your answer..." autocomplete="off" autocorrect="off" autocapitalize="off" />
         <button class="action-btn" style="max-width: 340px; padding: 13px;" onclick="submitBlank()">Submit Answer ↵</button>
       </div>
 
-      <!-- Fanfare Notification -->
       <div class="level-up-banner" id="level-up-box">
         <div class="level-up-title">★ LEVEL UP! ★</div>
         <div class="level-up-msg">Congratulations! You have levelled up!</div>
@@ -353,7 +324,7 @@
       <button class="action-btn" id="continue-btn" style="display: none;" onclick="nextStep()">Click here to continue ➜</button>
     </div>
 
-    <!-- SCREEN 3: RESULTS SCREEN -->
+    <!-- SCREEN 3: RESULTS -->
     <div id="result-panel" class="screen-panel" style="text-align: center; padding: 30px 14px;">
       <div style="font-size: 3rem; margin-bottom: 8px;">🏆 QUEST COMPLETE! 🏆</div>
       <p style="color: #ff981f; font-size: 1.4rem;" id="hero-congrats"></p>
@@ -370,14 +341,89 @@
     let earnedXP = 0;
     const XP_INCREMENT = 100;
 
-    const bgmAdventure = document.getElementById("audio-adventure");
-    const sfxQuestComplete = document.getElementById("audio-questcomplete");
+    const bgmAudio = document.getElementById("audio-adventure");
+    const questCompleteAudio = document.getElementById("audio-questcomplete");
+    bgmAudio.volume = 0.5;
+    questCompleteAudio.volume = 0.6;
 
-    bgmAdventure.volume = 0.5;
-    sfxQuestComplete.volume = 0.6;
+    /* WebAudio Synthesizer Engine (Fallback if MP3 files are missing or blocked) */
+    let audioCtx = null;
+    let bgmLoopTimer = null;
+
+    function initAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playTone(freq, type, duration, delay = 0, vol = 0.15) {
+      if (!audioCtx) return;
+      setTimeout(() => {
+        try {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+          gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + duration);
+        } catch (e) {}
+      }, delay * 1000);
+    }
+
+    // Authentic retro Lumbridge background melody loop
+    function startSynthBGM() {
+      if (bgmLoopTimer) clearInterval(bgmLoopTimer);
+      const notes = [
+        { f: 293.66, d: 0.35, t: 0.0 }, // D4
+        { f: 329.63, d: 0.35, t: 0.4 }, // E4
+        { f: 369.99, d: 0.50, t: 0.8 }, // F#4
+        { f: 440.00, d: 0.50, t: 1.4 }, // A4
+        { f: 369.99, d: 0.35, t: 2.0 }, // F#4
+        { f: 329.63, d: 0.70, t: 2.4 }, // E4
+        { f: 293.66, d: 0.35, t: 3.2 }, // D4
+        { f: 369.99, d: 0.35, t: 3.6 }, // F#4
+        { f: 440.00, d: 0.70, t: 4.0 }, // A4
+        { f: 392.00, d: 0.35, t: 4.8 }, // G4
+        { f: 369.99, d: 0.35, t: 5.2 }, // F#4
+        { f: 293.66, d: 0.90, t: 5.6 }  // D4
+      ];
+
+      function playMeasure() {
+        notes.forEach(n => playTone(n.f, 'triangle', n.d, n.t, 0.12));
+      }
+
+      playMeasure();
+      bgmLoopTimer = setInterval(playMeasure, 6800);
+    }
+
+    function stopSynthBGM() {
+      if (bgmLoopTimer) {
+        clearInterval(bgmLoopTimer);
+        bgmLoopTimer = null;
+      }
+    }
+
+    // Classic RuneScape Quest Complete Fanfare
+    function playFanfare() {
+      const fanfareNotes = [
+        { f: 261.63, d: 0.25, t: 0.0 }, // C4
+        { f: 329.63, d: 0.25, t: 0.2 }, // E4
+        { f: 392.00, d: 0.30, t: 0.4 }, // G4
+        { f: 523.25, d: 0.80, t: 0.7 }, // C5
+        { f: 440.00, d: 0.25, t: 1.5 }, // A4
+        { f: 523.25, d: 1.20, t: 1.8 }  // C5
+      ];
+      fanfareNotes.forEach(n => playTone(n.f, 'square', n.d, n.t, 0.18));
+    }
 
     const questData = [
-      // --- QUEST 1: MULTIPLE CHOICE ---
       {
         questName: "Quest 1: Choose the best answer (1/5)",
         type: "mc",
@@ -482,8 +528,6 @@
           <text x="200" y="156" font-family="'RuneScape-Plain-12', monospace" font-size="12" fill="#fde68a" text-anchor="middle">FRIENDLY STRAY DOG</text>
         </svg>`
       },
-
-      // --- QUEST 2: FILL IN THE BLANKS ---
       {
         questName: "Quest 2: Fill in the blank (1/5)",
         type: "blank",
@@ -581,8 +625,16 @@
       document.getElementById("hud-player-name").textContent = `Player: ${hero}`;
       switchScreen("gameplay-panel");
       
-      bgmAdventure.currentTime = 0;
-      bgmAdventure.play().catch(() => {});
+      initAudioContext();
+
+      // Try playing uploaded MP3; fall back to WebAudio Synth if missing/unsupported
+      bgmAudio.currentTime = 0;
+      const playPromise = bgmAudio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          startSynthBGM();
+        });
+      }
 
       renderStage();
     }
@@ -679,6 +731,8 @@
       earnedXP += XP_INCREMENT;
       document.getElementById("hud-xp-score").textContent = `XP: ${earnedXP} / 1000`;
       document.getElementById("level-up-box").style.display = "block";
+      playTone(587.33, 'triangle', 0.15, 0.0, 0.2); // D5 chime
+      playTone(880.00, 'triangle', 0.40, 0.1, 0.2); // A5 chime
       fireConfetti();
     }
 
@@ -692,11 +746,19 @@
     }
 
     function completeQuest() {
-      bgmAdventure.pause();
-      bgmAdventure.currentTime = 0;
+      bgmAudio.pause();
+      bgmAudio.currentTime = 0;
+      stopSynthBGM();
 
-      sfxQuestComplete.currentTime = 0;
-      sfxQuestComplete.play().catch(() => {});
+      questCompleteAudio.currentTime = 0;
+      const playPromise = questCompleteAudio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          playFanfare();
+        });
+      } else {
+        playFanfare();
+      }
 
       switchScreen("result-panel");
       document.getElementById("hero-congrats").textContent = `Congratulations, Hero ${hero}!`;
@@ -717,8 +779,9 @@
       stepIndex = 0;
       earnedXP = 0;
       document.getElementById("player-input").value = "";
-      sfxQuestComplete.pause();
-      sfxQuestComplete.currentTime = 0;
+      questCompleteAudio.pause();
+      questCompleteAudio.currentTime = 0;
+      stopSynthBGM();
       switchScreen("start-panel");
     }
 
